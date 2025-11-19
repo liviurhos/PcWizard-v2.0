@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PC Compatibility Builder</title>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getDatabase, ref, push, set, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        
+        const firebaseConfig = {
+          apiKey: "AIzaSyD2u3hbwvsFuS2a1qYbhXPDs0x-RNix-DU",
+          authDomain: "pc-builder-746e0.firebaseapp.com",
+          projectId: "pc-builder-746e0",
+          storageBucket: "pc-builder-746e0.firebasestorage.app",
+          messagingSenderId: "300169800963",
+          appId: "1:300169800963:web:c5350c7f19e453b6f78d36",
+          databaseURL: "https://pc-builder-746e0-default-rtdb.europe-west1.firebasedatabase.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.firebaseAuth = getAuth(app);
+        window.firebaseDB = getDatabase(app);
+        window.firebaseCreateUser = createUserWithEmailAndPassword;
+        window.firebaseSignIn = signInWithEmailAndPassword;
+        window.firebaseSignOut = signOut;
+        window.firebaseAuthStateChanged = onAuthStateChanged;
+        window.firebaseRef = ref;
+        window.firebasePush = push;
+        window.firebaseSet = set;
+        window.firebaseOnValue = onValue;
+        window.firebaseRemove = remove;
+    </script>
+    
+    <style>
+        body { margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Lucide icons as SVG components
+        const Check = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>;
+        const X = ({ className }) => <svg className={className || "w-6 h-6"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>;
+        const AlertCircle = ({ className }) => <svg className={className || "w-5 h-5"} fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>;
+        const Cpu = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><rect x="9" y="9" width="6" height="6" /><line x1="9" y1="1" x2="9" y2="4" /><line x1="15" y1="1" x2="15" y2="4" /><line x1="9" y1="20" x2="9" y2="23" /><line x1="15" y1="20" x2="15" y2="23" /><line x1="20" y1="9" x2="23" y2="9" /><line x1="20" y1="14" x2="23" y2="14" /><line x1="1" y1="9" x2="4" y2="9" /><line x1="1" y1="14" x2="4" y2="14" /></svg>;
+        const Laptop = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>;
+        const MemoryStick = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" /><line x1="8" y1="2" x2="8" y2="4" /><line x1="12" y1="2" x2="12" y2="4" /><line x1="16" y1="2" x2="16" y2="4" /></svg>;
+        const Zap = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
+        const HardDrive = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="6" y1="12" x2="6.01" y2="12" /><line x1="10" y1="12" x2="10.01" y2="12" /></svg>;
+        const Paintbrush = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M18.37 2.63L14 7l-1.59-1.59a2 2 0 0 0-2.82 0L8 7l9 9 1.59-1.59a2 2 0 0 0 0-2.82L17 10l4.37-4.37a2.12 2.12 0 1 0-3-3Z" /><path d="M9 8c-2 3-4 3.5-7 4l8 10c2-1 6-5 6-7" /></svg>;
+        const Download = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>;
+        const User = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>;
+        const LogOut = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>;
+        const LogIn = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" /><polyline points="10 17 15 12 10 7" /><line x1="15" y1="12" x2="3" y2="12" /></svg>;
+        const Save = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>;
+        const Trash = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>;
+        const FolderOpen = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>;
+        const Award = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="8" r="7" /><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88" /></svg>;
+        const TrendingUp = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>;
+        const DollarSign = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>;
+        const Tag = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>;
+
+        // Performance benchmark database
+        const performanceBenchmarks = {
+          cpu: {
+            'Intel Core i5-13400F': { singleCore: 180, multiCore: 1100, tier: 'mid' },
+            'Intel Core i7-13700K': { singleCore: 210, multiCore: 1800, tier: 'high' },
+            'Intel Core i9-13900K': { singleCore: 230, multiCore: 2400, tier: 'ultra' },
+            'AMD Ryzen 5 5600X': { singleCore: 175, multiCore: 1050, tier: 'mid' },
+            'AMD Ryzen 7 5800X3D': { singleCore: 185, multiCore: 1400, tier: 'high' },
+            'AMD Ryzen 9 5950X': { singleCore: 195, multiCore: 2100, tier: 'ultra' },
+            'AMD Ryzen 5 7600X': { singleCore: 200, multiCore: 1300, tier: 'high' },
+            'AMD Ryzen 7 7800X3D': { singleCore: 205, multiCore: 1600, tier: 'ultra' },
+          },
+          gpu: {
+            'NVIDIA RTX 4060': { score: 150, tier: 'mid', vram: 8 },
+            'NVIDIA RTX 4070': { score: 220, tier: 'high', vram: 12 },
+            'NVIDIA RTX 4080': { score: 320, tier: 'ultra', vram: 16 },
+            'AMD RX 7600': { score: 140, tier: 'mid', vram: 8 },
+            'AMD RX 7800 XT': { score: 240, tier: 'high', vram: 16 },
+            'AMD RX 7900 XTX': { score: 310, tier: 'ultra', vram: 24 },
+          }
+        };
+
+        const gamingBenchmarks = [
+          { name: 'Cyberpunk 2077', quality: 'Ultra', resolution: '1440p', minGpu: 180, minCpu: 160 },
+          { name: 'Counter-Strike 2', quality: 'Max', resolution: '1080p', minGpu: 80, minCpu: 140 },
+          { name: 'Fortnite', quality: 'Epic', resolution: '1440p', minGpu: 120, minCpu: 150 },
+          { name: 'Call of Duty: Warzone', quality: 'High', resolution: '1080p', minGpu: 130, minCpu: 160 },
+          { name: 'Valorant', quality: 'Max', resolution: '1080p', minGpu: 60, minCpu: 120 },
+          { name: 'League of Legends', quality: 'Max', resolution: '1080p', minGpu: 50, minCpu: 100 },
+          { name: 'GTA V', quality: 'Very High', resolution: '1080p', minGpu: 100, minCpu: 140 },
+          { name: 'Minecraft (Shaders)', quality: 'High', resolution: '1080p', minGpu: 110, minCpu: 130 },
+        ];
+
+        const componentsDB = {
+          cpu: [
+            { id: 1, name: 'Intel Core i5-13400F', brand: 'Intel', socket: 'LGA1700', tdp: 65, price: 900 },
+            { id: 2, name: 'Intel Core i7-13700K', brand: 'Intel', socket: 'LGA1700', tdp: 125, price: 1800 },
+            { id: 3, name: 'Intel Core i9-13900K', brand: 'Intel', socket: 'LGA1700', tdp: 150, price: 2800 },
+            { id: 4, name: 'AMD Ryzen 5 5600X', brand: 'AMD', socket: 'AM4', tdp: 65, price: 850 },
+            { id: 5, name: 'AMD Ryzen 7 5800X3D', brand: 'AMD', socket: 'AM4', tdp: 105, price: 1600 },
+            { id: 6, name: 'AMD Ryzen 9 5950X', brand: 'AMD', socket: 'AM4', tdp: 105, price: 2500 },
+            { id: 7, name: 'AMD Ryzen 5 7600X', brand: 'AMD', socket: 'AM5', tdp: 105, price: 1200 },
+            { id: 8, name: 'AMD Ryzen 7 7800X3D', brand: 'AMD', socket: 'AM5', tdp: 120, price: 2200 },
+          ],
+          motherboard: [
+            { id: 1, name: 'ASUS Prime B760M', socket: 'LGA1700', ramType: 'DDR4', maxRamSpeed: 3200, price: 600 },
+            { id: 2, name: 'MSI MAG B760', socket: 'LGA1700', ramType: 'DDR5', maxRamSpeed: 5600, price: 900 },
+            { id: 3, name: 'GIGABYTE Z790', socket: 'LGA1700', ramType: 'DDR5', maxRamSpeed: 7200, price: 1400 },
+            { id: 4, name: 'GIGABYTE B550', socket: 'AM4', ramType: 'DDR4', maxRamSpeed: 3600, price: 550 },
+            { id: 5, name: 'ASRock X570', socket: 'AM4', ramType: 'DDR4', maxRamSpeed: 4400, price: 800 },
+            { id: 6, name: 'MSI MAG B550 TOMAHAWK', socket: 'AM4', ramType: 'DDR4', maxRamSpeed: 4600, price: 950 },
+            { id: 7, name: 'ASUS ROG X670E', socket: 'AM5', ramType: 'DDR5', maxRamSpeed: 6400, price: 1500 },
+            { id: 8, name: 'GIGABYTE B650', socket: 'AM5', ramType: 'DDR5', maxRamSpeed: 6000, price: 1100 },
+          ],
+          ram: [
+            { id: 1, name: 'Corsair Vengeance 16GB DDR4', type: 'DDR4', speed: 3200, capacity: 16, price: 250 },
+            { id: 2, name: 'Kingston Fury 16GB DDR4', type: 'DDR4', speed: 3600, capacity: 16, price: 280 },
+            { id: 3, name: 'Kingston Fury 16GB DDR4', type: 'DDR4', speed: 2666, capacity: 16, price: 200 },
+            { id: 4, name: 'G.Skill Ripjaws 32GB DDR4', type: 'DDR4', speed: 3200, capacity: 32, price: 450 },
+            { id: 5, name: 'Corsair Vengeance 32GB DDR4', type: 'DDR4', speed: 3600, capacity: 32, price: 520 },
+            { id: 6, name: 'G.Skill Trident 32GB DDR5', type: 'DDR5', speed: 5600, capacity: 32, price: 650 },
+            { id: 7, name: 'Corsair Dominator 32GB DDR5', type: 'DDR5', speed: 6000, capacity: 32, price: 800 },
+            { id: 8, name: 'Kingston Fury 16GB DDR5', type: 'DDR5', speed: 5200, capacity: 16, price: 400 },
+            { id: 9, name: 'G.Skill Trident Z5 64GB DDR5', type: 'DDR5', speed: 6400, capacity: 64, price: 1400 },
+          ],
+          gpu: [
+            { id: 1, name: 'NVIDIA RTX 4060', tdp: 115, price: 1600 },
+            { id: 2, name: 'NVIDIA RTX 4070', tdp: 200, price: 2800 },
+            { id: 3, name: 'NVIDIA RTX 4080', tdp: 320, price: 5500 },
+            { id: 4, name: 'AMD RX 7600', tdp: 165, price: 1400 },
+            { id: 5, name: 'AMD RX 7800 XT', tdp: 263, price: 2500 },
+            { id: 6, name: 'AMD RX 7900 XTX', tdp: 355, price: 4500 },
+          ],
+          storage: [
+            { id: 1, name: 'Samsung 970 EVO 500GB NVMe', type: 'NVMe', capacity: 500, price: 280 },
+            { id: 2, name: 'WD Black SN770 1TB NVMe', type: 'NVMe', capacity: 1000, price: 450 },
+            { id: 3, name: 'Samsung 980 PRO 2TB NVMe', type: 'NVMe', capacity: 2000, price: 900 },
+            { id: 4, name: 'Crucial MX500 1TB SATA SSD', type: 'SATA', capacity: 1000, price: 350 },
+            { id: 5, name: 'WD Blue 2TB HDD', type: 'HDD', capacity: 2000, price: 250 },
+          ],
+          psu: [
+            { id: 1, name: 'Corsair CV550', wattage: 550, efficiency: '80+', price: 250 },
+            { id: 2, name: 'Seasonic Focus 650W', wattage: 650, efficiency: '80+ Gold', price: 400 },
+            { id: 3, name: 'EVGA SuperNOVA 750W', wattage: 750, efficiency: '80+ Gold', price: 500 },
+            { id: 4, name: 'Corsair RM850x', wattage: 850, efficiency: '80+ Gold', price: 650 },
+            { id: 5, name: 'Seasonic Prime TX-1000', wattage: 1000, efficiency: '80+ Titanium', price: 950 },
+          ],
+        };
+
+        const PCBuilder = () => {
+          const [selectedBrand, setSelectedBrand] = useState(null);
+          const [selectedComponents, setSelectedComponents] = useState({
+            cpu: null, motherboard: null, ram: null, gpu: null, storage: null, psu: null,
+          });
+          const [compatibility, setCompatibility] = useState(100);
+          const [compatibilityIssues, setCompatibilityIssues] = useState([]);
+          
+          // Auth states
+          const [user, setUser] = useState(null);
+          const [showAuthModal, setShowAuthModal] = useState(false);
+          const [authMode, setAuthMode] = useState('login');
+          const [email, setEmail] = useState('');
+          const [password, setPassword] = useState('');
+          const [authError, setAuthError] = useState('');
+          const [authLoading, setAuthLoading] = useState(false);
+          
+          // Save/Load states
+          const [showSaveModal, setShowSaveModal] = useState(false);
+          const [configName, setConfigName] = useState('');
+          const [savedConfigs, setSavedConfigs] = useState([]);
+          const [showSavedConfigs, setShowSavedConfigs] = useState(false);
+          const [showWelcomePage, setShowWelcomePage] = useState(true);
+          
+          // Performance rating states
+          const [showPerformanceRating, setShowPerformanceRating] = useState(false);
+          const [performanceScores, setPerformanceScores] = useState(null);
+          
+          // Price estimation states
+          const [showPriceEstimation, setShowPriceEstimation] = useState(false);
+          const [priceEstimation, setPriceEstimation] = useState(null);
+
+          useEffect(() => {
+            const checkAuth = () => {
+              if (window.firebaseAuthStateChanged && window.firebaseAuth) {
+                const unsubscribe = window.firebaseAuthStateChanged(window.firebaseAuth, (currentUser) => {
+                  setUser(currentUser);
+                  if (currentUser) {
+                    loadSavedConfigs(currentUser.uid);
+                  } else {
+                    setSavedConfigs([]);
+                  }
+                });
+                return unsubscribe;
+              }
+            };
+            const unsubscribe = checkAuth();
+            return () => unsubscribe && unsubscribe();
+          }, []);
+
+          useEffect(() => {
+            calculateCompatibility();
+          }, [selectedComponents]);
+
+          const calculateCompatibility = () => {
+            let score = 100;
+            const issues = [];
+            const { cpu, motherboard, ram, gpu, psu } = selectedComponents;
+
+            if (cpu && motherboard && cpu.socket !== motherboard.socket) {
+              score = 0;
+              issues.push('Socket incompatibil! CPU și motherboard nu pot fi conectate.');
+            }
+
+            if (motherboard && ram) {
+              if (motherboard.ramType !== ram.type) {
+                score = 0;
+                issues.push(`Tip RAM incompatibil! Motherboard suportă ${motherboard.ramType}, ai ales ${ram.type}.`);
+              } else if (ram.speed > motherboard.maxRamSpeed) {
+                score -= 10;
+                issues.push(`Frecvența memoriei RAM este prea mare. RAM va rula la ${motherboard.maxRamSpeed}MHz în loc de ${ram.speed}MHz.`);
+              } else if (ram.speed < motherboard.maxRamSpeed - 400) {
+                score -= 5;
+                issues.push(`Frecvența memoriei RAM este mică. Motherboard suportă până la ${motherboard.maxRamSpeed}MHz.`);
+              }
+            }
+
+            if (psu && cpu) {
+              let totalConsumption = cpu.tdp + 100;
+              if (gpu) totalConsumption += gpu.tdp;
+              const recommended = totalConsumption * 1.3;
+              
+              if (psu.wattage < totalConsumption) {
+                score = 0;
+                issues.push(`Sursa este prea slabă! Consum estimat: ${totalConsumption}W, ai ales ${psu.wattage}W.`);
+              } else if (psu.wattage < recommended) {
+                score -= 15;
+                issues.push(`Sursa este la limită. Se recomandă minim ${Math.round(recommended)}W pentru stabilitate optimă.`);
+              }
+            }
+
+            setCompatibility(Math.max(0, score));
+            setCompatibilityIssues(issues);
+          };
+
+          const handleSignUp = async (e) => {
+            e.preventDefault();
+            setAuthError('');
+            setAuthLoading(true);
+
+            try {
+              await window.firebaseCreateUser(window.firebaseAuth, email, password);
+              setShowAuthModal(false);
+              setEmail('');
+              setPassword('');
+            } catch (error) {
+              if (error.code === 'auth/email-already-in-use') {
+                setAuthError('Email-ul este deja folosit');
+              } else if (error.code === 'auth/weak-password') {
+                setAuthError('Parola trebuie să aibă minim 6 caractere');
+              } else if (error.code === 'auth/invalid-email') {
+                setAuthError('Email invalid');
+              } else {
+                setAuthError('Eroare la înregistrare');
+              }
+            } finally {
+              setAuthLoading(false);
+            }
+          };
+
+          const handleLogin = async (e) => {
+            e.preventDefault();
+            setAuthError('');
+            setAuthLoading(true);
+
+            try {
+              await window.firebaseSignIn(window.firebaseAuth, email, password);
+              setShowAuthModal(false);
+              setEmail('');
+              setPassword('');
+            } catch (error) {
+              if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                setAuthError('Email sau parolă greșită');
+              } else if (error.code === 'auth/invalid-email') {
+                setAuthError('Email invalid');
+              } else {
+                setAuthError('Eroare la autentificare');
+              }
+            } finally {
+              setAuthLoading(false);
+            }
+          };
+
+          const handleLogout = async () => {
+            try {
+              await window.firebaseSignOut(window.firebaseAuth);
+            } catch (error) {
+              console.error('Eroare la logout:', error);
+            }
+          };
+
+          const loadSavedConfigs = (userId) => {
+            if (!window.firebaseDB) return;
+            const configsRef = window.firebaseRef(window.firebaseDB, `users/${userId}/configurations`);
+            window.firebaseOnValue(configsRef, (snapshot) => {
+              const data = snapshot.val();
+              if (data) {
+                const configsArray = Object.entries(data).map(([id, config]) => ({
+                  id,
+                  ...config
+                }));
+                setSavedConfigs(configsArray.sort((a, b) => b.timestamp - a.timestamp));
+              } else {
+                setSavedConfigs([]);
+              }
+            });
+          };
+
+          const handleSaveConfig = async () => {
+            if (!user) {
+              alert('Trebuie să fii autentificat pentru a salva configurații!');
+              return;
+            }
+            if (!configName.trim()) {
+              alert('Te rog introdu un nume pentru configurație!');
+              return;
+            }
+            if (!hasAnyComponent) {
+              alert('Te rog selectează cel puțin o componentă!');
+              return;
+            }
+
+            try {
+              const configData = {
+                name: configName,
+                components: selectedComponents,
+                compatibility: compatibility,
+                totalPrice: totalPrice,
+                timestamp: Date.now(),
+                createdAt: new Date().toLocaleString('ro-RO')
+              };
+
+              const userConfigsRef = window.firebaseRef(window.firebaseDB, `users/${user.uid}/configurations`);
+              const newConfigRef = window.firebasePush(userConfigsRef);
+              await window.firebaseSet(newConfigRef, configData);
+
+              setShowSaveModal(false);
+              setConfigName('');
+              alert('Configurație salvată cu succes! ✅');
+            } catch (error) {
+              console.error('Eroare la salvare:', error);
+              alert('Eroare la salvarea configurației: ' + error.message);
+            }
+          };
+
+          const handleLoadConfig = (config) => {
+            setSelectedComponents(config.components);
+            if (config.components.cpu) {
+              setSelectedBrand(config.components.cpu.brand);
+            }
+            setShowSavedConfigs(false);
+            setShowWelcomePage(false);
+            alert(`Configurație "${config.name}" încărcată! ✅`);
+          };
+
+          const handleDeleteConfig = async (configId) => {
+            if (!confirm('Sigur vrei să ștergi această configurație?')) return;
+
+            try {
+              const configRef = window.firebaseRef(window.firebaseDB, `users/${user.uid}/configurations/${configId}`);
+              await window.firebaseRemove(configRef);
+              alert('Configurație ștearsă! ✅');
+            } catch (error) {
+              console.error('Eroare la ștergere:', error);
+              alert('Eroare la ștergerea configurației: ' + error.message);
+            }
+          };
+
+          const calculatePerformanceRating = () => {
+            const { cpu, gpu, ram, storage } = selectedComponents;
+            
+            if (!cpu) {
+              alert('Te rog selectează cel puțin un CPU pentru a calcula performance!');
+              return;
+            }
+
+            // Get CPU benchmark
+            const cpuBench = performanceBenchmarks.cpu[cpu.name] || { singleCore: 100, multiCore: 600, tier: 'entry' };
+            
+            // Get GPU benchmark (if exists)
+            const gpuBench = gpu ? (performanceBenchmarks.gpu[gpu.name] || { score: 50, tier: 'entry', vram: 4 }) : null;
+            
+            // Calculate scores (0-10 scale)
+            let gamingScore = 0;
+            let productivityScore = 0;
+            let contentCreationScore = 0;
+
+            // Gaming Score (GPU heavy)
+            if (gpuBench) {
+              gamingScore = Math.min(10, (gpuBench.score / 320) * 10); // RTX 4080 = 10
+              gamingScore += (cpuBench.singleCore / 230) * 2; // CPU bonus
+              gamingScore = Math.min(10, gamingScore / 1.2);
+            } else {
+              gamingScore = (cpuBench.singleCore / 230) * 3; // Integrated graphics
+            }
+
+            // Productivity Score (CPU + RAM)
+            productivityScore = (cpuBench.multiCore / 2400) * 7; // Multi-core important
+            if (ram) {
+              const ramBonus = Math.min(3, (ram.capacity / 32) * 2 + (ram.speed / 6400));
+              productivityScore += ramBonus;
+            }
+            productivityScore = Math.min(10, productivityScore);
+
+            // Content Creation Score (CPU + GPU + RAM)
+            contentCreationScore = (cpuBench.multiCore / 2400) * 5;
+            if (gpuBench) {
+              contentCreationScore += (gpuBench.score / 320) * 3;
+            }
+            if (ram) {
+              contentCreationScore += Math.min(2, ram.capacity / 16);
+            }
+            contentCreationScore = Math.min(10, contentCreationScore);
+
+            // Overall Score
+            const overallScore = (gamingScore + productivityScore + contentCreationScore) / 3;
+
+            // Calculate gaming benchmarks
+            const gamingResults = gamingBenchmarks.map(game => {
+              const cpuOk = cpuBench.singleCore >= game.minCpu;
+              const gpuOk = gpuBench ? gpuBench.score >= game.minGpu : false;
+              
+              let fps = 0;
+              let canRun = 'no';
+              
+              if (cpuOk && gpuOk) {
+                const cpuRatio = cpuBench.singleCore / game.minCpu;
+                const gpuRatio = gpuBench.score / game.minGpu;
+                fps = Math.round(Math.min(cpuRatio, gpuRatio) * 60);
+                canRun = fps >= 60 ? 'excellent' : fps >= 30 ? 'good' : 'low';
+              } else if (cpuOk && !gpuBench) {
+                canRun = 'integrated';
+              }
+
+              return { ...game, fps, canRun };
+            });
+
+            // Calculate percentile (mock)
+            const percentile = Math.round(overallScore * 9 + 10);
+
+            setPerformanceScores({
+              gaming: gamingScore.toFixed(1),
+              productivity: productivityScore.toFixed(1),
+              contentCreation: contentCreationScore.toFixed(1),
+              overall: overallScore.toFixed(1),
+              tier: overallScore >= 8 ? 'Ultra' : overallScore >= 6 ? 'High-End' : overallScore >= 4 ? 'Mid-Range' : 'Entry-Level',
+              percentile: percentile,
+              gamingResults: gamingResults,
+              cpuTier: cpuBench.tier,
+              gpuTier: gpuBench?.tier || 'none'
+            });
+
+            setShowPerformanceRating(true);
+          };
+
+          const calculatePriceEstimation = () => {
+            const { cpu, gpu, ram, storage, motherboard, psu } = selectedComponents;
+            
+            if (!cpu) {
+              alert('Te rog selectează cel puțin un CPU pentru a estima prețul!');
+              return;
+            }
+
+            // Calculate depreciation based on component age
+            const getDepreciation = (componentType) => {
+              // Assume components are 1 year old (can be improved with actual data)
+              const depreciationRates = {
+                cpu: 0.70,      // 30% depreciation
+                gpu: 0.65,      // 35% depreciation
+                ram: 0.80,      // 20% depreciation
+                storage: 0.75,  // 25% depreciation
+                motherboard: 0.75, // 25% depreciation
+                psu: 0.80,      // 20% depreciation
+              };
+              return depreciationRates[componentType] || 0.75;
+            };
+
+            let newPrice = totalPrice;
+            let usedPrice = 0;
+            
+            // Calculate used prices
+            if (cpu) usedPrice += cpu.price * getDepreciation('cpu');
+            if (gpu) usedPrice += gpu.price * getDepreciation('gpu');
+            if (ram) usedPrice += ram.price * getDepreciation('ram');
+            if (storage) usedPrice += storage.price * getDepreciation('storage');
+            if (motherboard) usedPrice += motherboard.price * getDepreciation('motherboard');
+            if (psu) usedPrice += psu.price * getDepreciation('psu');
+
+            usedPrice = Math.round(usedPrice);
+
+            // Market comparison ranges
+            const marketRangeLow = Math.round(usedPrice * 0.85);
+            const marketRangeHigh = Math.round(usedPrice * 1.15);
+
+            // Similar builds prices
+            const similarBuilds = [
+              { platform: 'OLX', price: Math.round(usedPrice * 0.90), condition: 'Folosit - Stare bună' },
+              { platform: 'eBay', price: Math.round(usedPrice * 1.05), condition: 'Folosit - Ca nou' },
+              { platform: 'Facebook Marketplace', price: Math.round(usedPrice * 0.88), condition: 'Folosit' },
+            ];
+
+            // Depreciation timeline
+            const depreciationTimeline = [
+              { months: 0, value: newPrice, label: 'Nou' },
+              { months: 6, value: Math.round(newPrice * 0.85), label: '6 luni' },
+              { months: 12, value: Math.round(newPrice * 0.70), label: '1 an' },
+              { months: 24, value: Math.round(newPrice * 0.55), label: '2 ani' },
+              { months: 36, value: Math.round(newPrice * 0.40), label: '3 ani' },
+            ];
+
+            // Recommendations
+            const recommendations = [];
+            const depreciationPercent = Math.round((1 - usedPrice / newPrice) * 100);
+            
+            if (depreciationPercent > 40) {
+              recommendations.push('💡 Depreciere mare - ideal pentru cumpărare second-hand!');
+            }
+            if (gpu && gpu.price > newPrice * 0.4) {
+              recommendations.push('🎮 GPU-ul reprezintă cea mai mare parte din valoare - focus pe protecția acestuia!');
+            }
+            if (depreciationPercent < 25) {
+              recommendations.push('📈 Componente care își păstrează valoarea bine - investiție solidă!');
+            }
+
+            setPriceEstimation({
+              newPrice,
+              usedPrice,
+              marketRangeLow,
+              marketRangeHigh,
+              depreciationPercent,
+              similarBuilds,
+              depreciationTimeline,
+              recommendations
+            });
+
+            setShowPriceEstimation(true);
+          };
+
+          const getFilteredComponents = (type) => {
+            const components = componentsDB[type];
+            if (type === 'cpu' && selectedBrand) return components.filter(c => c.brand === selectedBrand);
+            if (type === 'motherboard' && selectedComponents.cpu) return components.filter(c => c.socket === selectedComponents.cpu.socket);
+            if (type === 'ram' && selectedComponents.motherboard) return components.filter(c => c.type === selectedComponents.motherboard.ramType);
+            return components;
+          };
+
+          const selectComponent = (type, component) => {
+            setSelectedComponents(prev => ({ ...prev, [type]: component }));
+          };
+
+          const resetBuild = () => {
+            setSelectedBrand(null);
+            setSelectedComponents({ cpu: null, motherboard: null, ram: null, gpu: null, storage: null, psu: null });
+          };
+
+          const getComponentIcon = (type) => {
+            const iconMap = { cpu: Cpu, motherboard: Laptop, ram: MemoryStick, gpu: Paintbrush, storage: HardDrive, psu: Zap };
+            return iconMap[type];
+          };
+
+          const totalPrice = Object.values(selectedComponents).filter(c => c).reduce((sum, c) => sum + c.price, 0);
+          const getCompatibilityColor = () => {
+            if (compatibility === 100) return 'bg-green-500';
+            if (compatibility >= 90) return 'bg-yellow-500';
+            if (compatibility >= 70) return 'bg-orange-500';
+            return 'bg-red-500';
+          };
+          const getCompatibilityIcon = () => {
+            if (compatibility === 100) return <Check />;
+            if (compatibility >= 70) return <AlertCircle className="w-6 h-6 text-yellow-500" />;
+            return <X className="w-6 h-6 text-red-500" />;
+          };
+          const hasAnyComponent = Object.values(selectedComponents).some(c => c !== null);
+
+          const downloadConfiguration = () => {
+            const config = selectedComponents;
+            let txt = '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n   CONFIGURAȚIA MEA PC - PC BUILDER\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+            txt += `📊 COMPATIBILITATE: ${compatibility}%\n💰 PREȚ TOTAL: ${totalPrice} RON\n\n`;
+            if (compatibilityIssues.length > 0) {
+              txt += '⚠️ AVERTISMENTE:\n';
+              compatibilityIssues.forEach((issue, i) => txt += `   ${i + 1}. ${issue}\n`);
+              txt += '\n';
+            }
+            txt += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n   COMPONENTE SELECTATE\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+            Object.entries(config).forEach(([type, c]) => {
+              if (!c) return;
+              const icons = { cpu: '🖥️', motherboard: '💻', ram: '🧠', gpu: '🎨', storage: '💾', psu: '⚡' };
+              const titles = { cpu: 'CPU', motherboard: 'MOTHERBOARD', ram: 'RAM', gpu: 'VIDEO CARD', storage: 'STORAGE', psu: 'POWER SUPPLY' };
+              txt += `${icons[type]} ${titles[type]}:\n   • ${c.name}\n`;
+              if (c.socket) txt += `   • Socket: ${c.socket}\n`;
+              if (c.tdp) txt += `   • TDP: ${c.tdp}W\n`;
+              if (c.ramType) txt += `   • RAM: ${c.ramType} (max ${c.maxRamSpeed}MHz)\n`;
+              if (c.speed) txt += `   • Frecvență: ${c.speed}MHz\n`;
+              if (c.capacity) txt += `   • Capacitate: ${c.capacity}GB\n`;
+              if (c.wattage) txt += `   • Putere: ${c.wattage}W\n`;
+              if (c.efficiency) txt += `   • Eficiență: ${c.efficiency}\n`;
+              txt += `   • Preț: ${c.price} RON\n`;
+              if (c.link) txt += `   • Link: ${c.link}\n`;
+              txt += '\n';
+            });
+            txt += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' + `Generat pe: ${new Date().toLocaleString('ro-RO')}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`;
+            const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `configuratie-pc-${Date.now()}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          };
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
+              <div className="max-w-6xl mx-auto">
+                <div className="flex justify-between items-center mb-6">
+                  <div>
+                    <h1 className="text-4xl font-bold text-white mb-2">PC Compatibility Builder</h1>
+                    <p className="text-slate-400">Alege componentele și verifică compatibilitatea</p>
+                  </div>
+                  <div>
+                    {user ? (
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-slate-800 px-4 py-2 rounded-lg border border-slate-700">
+                          <User className="w-5 h-5 text-blue-400" />
+                          <span className="text-slate-200 text-sm">{user.email}</span>
+                        </div>
+                        <button onClick={handleLogout} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg transition">
+                          <LogOut className="w-4 h-4" />
+                          Logout
+                        </button>
+                      </div>
+                    ) : (
+                      <button onClick={() => setShowAuthModal(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition font-semibold">
+                        <LogIn className="w-5 h-5" />
+                        Sign In / Sign Up
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-slate-800 rounded-lg p-6 mb-6 border border-slate-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="text-green-500">{getCompatibilityIcon()}</div>
+                      <span className="text-white font-semibold text-xl">Compatibilitate: {compatibility}%</span>
+                    </div>
+                    <div className="text-white font-bold text-xl">{totalPrice} RON</div>
+                  </div>
+                  <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden">
+                    <div className={`h-full ${getCompatibilityColor()} transition-all duration-500`} style={{ width: `${compatibility}%` }} />
+                  </div>
+                  
+                  {compatibilityIssues.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      {compatibilityIssues.map((issue, i) => (
+                        <div key={i} className={`flex items-start gap-2 p-3 rounded-lg ${compatibility === 0 ? 'bg-red-900/30 border border-red-500/50' : 'bg-yellow-900/30 border border-yellow-500/50'}`}>
+                          <AlertCircle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${compatibility === 0 ? 'text-red-400' : 'text-yellow-400'}`} />
+                          <p className={`text-sm ${compatibility === 0 ? 'text-red-200' : 'text-yellow-200'}`}>{issue}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {hasAnyComponent && (
+                    <button onClick={downloadConfiguration} className="w-full mt-4 flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 rounded-lg transition shadow-lg">
+                      <Download className="w-5 h-5" />
+                      Descarcă configurația (TXT)
+                    </button>
+                  )}
+
+                  {user && hasAnyComponent && (
+                    <div className="mt-3 grid grid-cols-2 gap-3">
+                      <button onClick={() => setShowSaveModal(true)} className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                        <Save className="w-5 h-5" />
+                        Salvează configurația
+                      </button>
+                      <button onClick={() => setShowSavedConfigs(true)} className="flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg transition">
+                        <FolderOpen className="w-5 h-5" />
+                        Configurațiile mele ({savedConfigs.length})
+                      </button>
+                    </div>
+                  )}
+
+                  {hasAnyComponent && selectedComponents.cpu && user && (
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <button onClick={calculatePerformanceRating} className="flex items-center justify-center gap-2 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white font-semibold py-3 rounded-lg transition shadow-lg">
+                        <Award className="w-5 h-5" />
+                        Rate My PC
+                      </button>
+                      <button onClick={calculatePriceEstimation} className="flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-lg transition shadow-lg">
+                        <DollarSign className="w-5 h-5" />
+                        Price My PC
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Sign Up Banner for Non-Authenticated Users */}
+                  {!user && hasAnyComponent && (
+                    <div className="mt-4 bg-gradient-to-r from-blue-900/40 to-purple-900/40 border-2 border-blue-500/50 rounded-lg p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="bg-blue-600 rounded-full p-3 flex-shrink-0">
+                          <User className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-white font-bold text-lg mb-2">🎁 Deblochează toate funcțiile gratuit!</h3>
+                          <p className="text-blue-200 text-sm mb-4">
+                            Creează un cont gratuit și ai acces la:
+                          </p>
+                          <ul className="text-blue-100 text-sm space-y-2 mb-4">
+                            <li className="flex items-center gap-2">
+                              <span className="text-green-400">✓</span> <strong>Rate My PC</strong> - Performance score detaliat
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-green-400">✓</span> <strong>Price My PC</strong> - Estimare valoare second-hand
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-green-400">✓</span> Salvează configurații nelimitate
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-green-400">✓</span> Istoric complet al configurațiilor
+                            </li>
+                            <li className="flex items-center gap-2">
+                              <span className="text-green-400">✓</span> Lipește link-uri pentru componente custom
+                            </li>
+                          </ul>
+                          <button
+                            onClick={() => setShowAuthModal(true)}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-lg transition shadow-lg w-full md:w-auto"
+                          >
+                            Creează cont gratuit - 100% FREE →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Welcome Page for Logged-in Users */}
+                {user && showWelcomePage && !selectedBrand && (
+                  <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg p-12 mb-6 border-2 border-blue-500/30 shadow-2xl">
+                    <div className="text-center mb-8">
+                      <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-600 rounded-full mb-4">
+                        <User className="w-10 h-10 text-white" />
+                      </div>
+                      <h2 className="text-3xl font-bold text-white mb-2">Bine ai revenit! 👋</h2>
+                      <p className="text-slate-300 text-lg">{user.email}</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+                      {/* Start New Configuration */}
+                      <div 
+                        onClick={() => setShowWelcomePage(false)}
+                        className="bg-slate-700 hover:bg-slate-600 rounded-lg p-8 cursor-pointer transition-all hover:scale-105 border-2 border-transparent hover:border-blue-500 group"
+                      >
+                        <div className="flex flex-col items-center text-center">
+                          <div className="w-16 h-16 bg-blue-600 group-hover:bg-blue-700 rounded-full flex items-center justify-center mb-4 transition">
+                            <Cpu className="w-8 h-8 text-white" />
+                          </div>
+                          <h3 className="text-xl font-bold text-white mb-2">Start configurație nouă</h3>
+                          <p className="text-slate-300 text-sm">Construiește un PC nou de la zero și verifică compatibilitatea componentelor</p>
+                        </div>
+                      </div>
+
+                      {/* My Saved Configurations */}
+                      <div 
+                        onClick={() => setShowSavedConfigs(true)}
+                        className="bg-slate-700 hover:bg-slate-600 rounded-lg p-8 cursor-pointer transition-all hover:scale-105 border-2 border-transparent hover:border-purple-500 group relative"
+                      >
+                        <div className="flex flex-col items-center text-center">
+                          <div className="w-16 h-16 bg-purple-600 group-hover:bg-purple-700 rounded-full flex items-center justify-center mb-4 transition">
+                            <FolderOpen className="w-8 h-8 text-white" />
+                          </div>
+                          <h3 className="text-xl font-bold text-white mb-2">Configurațiile mele</h3>
+                          <p className="text-slate-300 text-sm">Vezi, încarcă sau șterge configurațiile pe care le-ai salvat anterior</p>
+                          {savedConfigs.length > 0 && (
+                            <div className="absolute -top-2 -right-2 bg-purple-500 text-white text-xs font-bold rounded-full w-8 h-8 flex items-center justify-center">
+                              {savedConfigs.length}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {savedConfigs.length > 0 && (
+                      <div className="mt-8 bg-slate-700/50 rounded-lg p-6">
+                        <h4 className="text-white font-semibold mb-4 flex items-center gap-2">
+                          <FolderOpen className="w-5 h-5 text-purple-400" />
+                          Ultimele configurații salvate:
+                        </h4>
+                        <div className="space-y-2">
+                          {savedConfigs.slice(0, 3).map((config) => (
+                            <div 
+                              key={config.id}
+                              onClick={() => { handleLoadConfig(config); }}
+                              className="bg-slate-600 hover:bg-slate-500 rounded-lg p-4 cursor-pointer transition flex justify-between items-center"
+                            >
+                              <div>
+                                <p className="text-white font-semibold">{config.name}</p>
+                                <p className="text-slate-300 text-sm">{config.createdAt}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-slate-300 text-sm">
+                                  <span className={config.compatibility === 100 ? 'text-green-400' : 'text-yellow-400'}>
+                                    {config.compatibility}%
+                                  </span>
+                                  {' • '}
+                                  <span className="text-white font-semibold">{config.totalPrice} RON</span>
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        {savedConfigs.length > 3 && (
+                          <button 
+                            onClick={() => setShowSavedConfigs(true)}
+                            className="mt-4 text-purple-400 hover:text-purple-300 text-sm font-semibold w-full text-center"
+                          >
+                            Vezi toate ({savedConfigs.length}) →
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Start Configuration for Non-Logged Users OR when showWelcomePage is false */}
+                {!selectedBrand && (!user || !showWelcomePage) && (
+                  <div className="bg-slate-800 rounded-lg p-8 mb-6 border border-slate-700">
+                    <h2 className="text-2xl font-bold text-white mb-4">Pasul 1: Alege brandul CPU</h2>
+                    <div className="grid grid-cols-2 gap-4">
+                      <button onClick={() => setSelectedBrand('Intel')} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-6 rounded-lg transition">Intel</button>
+                      <button onClick={() => setSelectedBrand('AMD')} className="bg-red-600 hover:bg-red-700 text-white font-semibold py-6 rounded-lg transition">AMD</button>
+                    </div>
+                  </div>
+                )}
+
+                {selectedBrand && (
+                  <>
+                    <ComponentSection title="CPU" type="cpu" icon={getComponentIcon('cpu')} components={getFilteredComponents('cpu')} selected={selectedComponents.cpu} onSelect={(c) => selectComponent('cpu', c)} />
+                    {selectedComponents.cpu && <ComponentSection title="Motherboard" type="motherboard" icon={getComponentIcon('motherboard')} components={getFilteredComponents('motherboard')} selected={selectedComponents.motherboard} onSelect={(c) => selectComponent('motherboard', c)} info={`Socket: ${selectedComponents.cpu.socket}`} />}
+                    {selectedComponents.motherboard && <ComponentSection title="RAM Memory" type="ram" icon={getComponentIcon('ram')} components={getFilteredComponents('ram')} selected={selectedComponents.ram} onSelect={(c) => selectComponent('ram', c)} info={`Tip: ${selectedComponents.motherboard.ramType}, Max: ${selectedComponents.motherboard.maxRamSpeed}MHz`} />}
+                    {selectedComponents.cpu && (
+                      <>
+                        <ComponentSection title="Video Card (GPU)" type="gpu" icon={getComponentIcon('gpu')} components={getFilteredComponents('gpu')} selected={selectedComponents.gpu} onSelect={(c) => selectComponent('gpu', c)} info="Opțional - pentru performanță grafică" />
+                        <ComponentSection title="Storage" type="storage" icon={getComponentIcon('storage')} components={getFilteredComponents('storage')} selected={selectedComponents.storage} onSelect={(c) => selectComponent('storage', c)} info="Alege SSD pentru viteză sau HDD pentru capacitate" />
+                        <ComponentSection title="Power Supply" type="psu" icon={getComponentIcon('psu')} components={getFilteredComponents('psu')} selected={selectedComponents.psu} onSelect={(c) => selectComponent('psu', c)} info={`Consum estimat: ~${selectedComponents.cpu.tdp + (selectedComponents.gpu?.tdp || 0) + 100}W`} />
+                      </>
+                    )}
+                    <button onClick={() => { resetBuild(); if(user) setShowWelcomePage(true); }} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-3 rounded-lg transition mt-6">
+                      {user ? 'Resetează și înapoi la meniu' : 'Resetează configurația'}
+                    </button>
+                  </>
+                )}
+
+                {showAuthModal && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-800 rounded-lg p-8 max-w-md w-full border border-slate-700">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-white">{authMode === 'login' ? 'Sign In' : 'Sign Up'}</h2>
+                        <button onClick={() => { setShowAuthModal(false); setAuthError(''); setEmail(''); setPassword(''); }} className="text-slate-400 hover:text-white">
+                          <X className="w-6 h-6" />
+                        </button>
+                      </div>
+
+                      <form onSubmit={authMode === 'login' ? handleLogin : handleSignUp} className="space-y-4">
+                        <div>
+                          <label className="block text-slate-300 text-sm mb-2">Email</label>
+                          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none" placeholder="email@example.com" required />
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-300 text-sm mb-2">Parolă</label>
+                          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none" placeholder="••••••••" required />
+                        </div>
+
+                        {authError && (
+                          <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-3">
+                            <p className="text-red-200 text-sm">{authError}</p>
+                          </div>
+                        )}
+
+                        <button type="submit" disabled={authLoading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                          {authLoading ? 'Se încarcă...' : (authMode === 'login' ? 'Sign In' : 'Sign Up')}
+                        </button>
+                      </form>
+
+                      <div className="mt-4 text-center">
+                        <button onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthError(''); }} className="text-blue-400 hover:text-blue-300 text-sm">
+                          {authMode === 'login' ? 'Nu ai cont? Sign Up aici' : 'Ai deja cont? Sign In aici'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {showSaveModal && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-800 rounded-lg p-8 max-w-md w-full border border-slate-700">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-white">Salvează configurația</h2>
+                        <button onClick={() => { setShowSaveModal(false); setConfigName(''); }} className="text-slate-400 hover:text-white">
+                          <X className="w-6 h-6" />
+                        </button>
+                      </div>
+
+                      <div className="mb-4">
+                        <label className="block text-slate-300 text-sm mb-2">Nume configurație</label>
+                        <input
+                          type="text"
+                          value={configName}
+                          onChange={(e) => setConfigName(e.target.value)}
+                          placeholder="Ex: PC Gaming Buget, PC Office, etc."
+                          className="w-full bg-slate-700 text-white px-4 py-3 rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none"
+                          onKeyPress={(e) => e.key === 'Enter' && handleSaveConfig()}
+                        />
+                      </div>
+
+                      <div className="bg-slate-700 rounded-lg p-4 mb-4">
+                        <div className="text-slate-300 text-sm space-y-1">
+                          <div className="flex justify-between">
+                            <span>Componente:</span>
+                            <span className="text-white font-semibold">{Object.values(selectedComponents).filter(c => c).length}/6</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Compatibilitate:</span>
+                            <span className={`font-semibold ${compatibility === 100 ? 'text-green-400' : compatibility >= 70 ? 'text-yellow-400' : 'text-red-400'}`}>{compatibility}%</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Preț total:</span>
+                            <span className="text-white font-semibold">{totalPrice} RON</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button onClick={handleSaveConfig} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition">
+                        Salvează
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {showSavedConfigs && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-slate-800 rounded-lg p-8 max-w-4xl w-full border border-slate-700 my-8">
+                      <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-white">Configurațiile mele salvate</h2>
+                        <button onClick={() => setShowSavedConfigs(false)} className="text-slate-400 hover:text-white">
+                          <X className="w-6 h-6" />
+                        </button>
+                      </div>
+
+                      {savedConfigs.length === 0 ? (
+                        <div className="text-center py-12">
+                          <FolderOpen className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                          <p className="text-slate-400 text-lg">Nu ai configurații salvate încă</p>
+                          <p className="text-slate-500 text-sm mt-2">Creează o configurație și apasă "Salvează configurația"</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 max-h-96 overflow-y-auto">
+                          {savedConfigs.map((config) => (
+                            <div key={config.id} className="bg-slate-700 rounded-lg p-4 hover:bg-slate-600 transition">
+                              <div className="flex justify-between items-start mb-2">
+                                <div className="flex-1">
+                                  <h3 className="text-white font-bold text-lg">{config.name}</h3>
+                                  <p className="text-slate-400 text-sm">{config.createdAt}</p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => handleLoadConfig(config)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition text-sm font-semibold"
+                                  >
+                                    Încarcă
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteConfig(config.id)}
+                                    className="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition"
+                                  >
+                                    <Trash className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="grid grid-cols-3 gap-4 text-sm">
+                                <div>
+                                  <span className="text-slate-400">Componente:</span>
+                                  <span className="text-white ml-2 font-semibold">{Object.values(config.components).filter(c => c).length}/6</span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400">Compatibilitate:</span>
+                                  <span className={`ml-2 font-semibold ${config.compatibility === 100 ? 'text-green-400' : config.compatibility >= 70 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                    {config.compatibility}%
+                                  </span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400">Preț:</span>
+                                  <span className="text-white ml-2 font-semibold">{config.totalPrice} RON</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {showPerformanceRating && performanceScores && (
+                  <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg p-6 md:p-8 max-w-4xl w-full border-2 border-orange-500/30 my-8 max-h-[90vh] overflow-y-auto">
+                      <div className="flex justify-between items-start mb-6 sticky top-0 bg-gradient-to-br from-slate-800 to-slate-900 pb-4 z-10">
+                        <div className="flex items-center gap-3">
+                          <Award className="w-8 h-8 md:w-10 md:h-10 text-orange-500" />
+                          <div>
+                            <h2 className="text-2xl md:text-3xl font-bold text-white">Performance Rating</h2>
+                            <p className="text-slate-400 text-sm">Analiza completă a sistemului tău</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setShowPerformanceRating(false)} className="text-slate-400 hover:text-white flex-shrink-0">
+                          <X className="w-6 h-6 md:w-8 md:h-8" />
+                        </button>
+                      </div>
+
+                      {/* Overall Score */}
+                      <div className="bg-gradient-to-r from-orange-600 to-red-600 rounded-lg p-4 md:p-6 mb-4 md:mb-6 text-center">
+                        <div className="text-4xl md:text-6xl font-bold text-white mb-2">{performanceScores.overall}/10</div>
+                        <div className="text-xl md:text-2xl font-bold text-white mb-2">{performanceScores.tier}</div>
+                        <div className="flex items-center justify-center gap-2 text-orange-100 text-sm md:text-base">
+                          <TrendingUp className="w-4 h-4 md:w-5 md:h-5" />
+                          <span>Mai bun decât {performanceScores.percentile}% din PC-uri</span>
+                        </div>
+                      </div>
+
+                      {/* Category Scores */}
+                      <div className="grid grid-cols-3 gap-3 md:gap-4 mb-4 md:mb-6">
+                        <div className="bg-slate-700 rounded-lg p-3 md:p-4">
+                          <div className="text-center">
+                            <div className="text-2xl md:text-4xl mb-1 md:mb-2">🎮</div>
+                            <div className="text-xl md:text-2xl font-bold text-white mb-1">{performanceScores.gaming}/10</div>
+                            <div className="text-slate-300 font-semibold text-xs md:text-sm">Gaming</div>
+                          </div>
+                        </div>
+                        <div className="bg-slate-700 rounded-lg p-3 md:p-4">
+                          <div className="text-center">
+                            <div className="text-2xl md:text-4xl mb-1 md:mb-2">💼</div>
+                            <div className="text-xl md:text-2xl font-bold text-white mb-1">{performanceScores.productivity}/10</div>
+                            <div className="text-slate-300 font-semibold text-xs md:text-sm">Productivity</div>
+                          </div>
+                        </div>
+                        <div className="bg-slate-700 rounded-lg p-3 md:p-4">
+                          <div className="text-center">
+                            <div className="text-2xl md:text-4xl mb-1 md:mb-2">🎨</div>
+                            <div className="text-xl md:text-2xl font-bold text-white mb-1">{performanceScores.contentCreation}/10</div>
+                            <div className="text-slate-300 font-semibold text-xs md:text-sm">Creation</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Gaming Benchmarks */}
+                      {performanceScores.gpuTier !== 'none' && (
+                        <div className="bg-slate-700 rounded-lg p-4 md:p-6 mb-4 md:mb-6">
+                          <h3 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4 flex items-center gap-2">
+                            <span>🎮</span> Gaming Benchmarks
+                          </h3>
+                          <div className="space-y-2 md:space-y-3">
+                            {performanceScores.gamingResults.map((game, index) => (
+                              <div key={index} className="bg-slate-600 rounded-lg p-3 flex justify-between items-center">
+                                <div className="flex-1 min-w-0 pr-3">
+                                  <div className="font-semibold text-white text-sm md:text-base truncate">{game.name}</div>
+                                  <div className="text-xs md:text-sm text-slate-300">{game.quality} @ {game.resolution}</div>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                  {game.canRun === 'excellent' && (
+                                    <div>
+                                      <div className="text-lg md:text-xl font-bold text-green-400">{game.fps} FPS</div>
+                                      <div className="text-xs text-green-300">Excelent</div>
+                                    </div>
+                                  )}
+                                  {game.canRun === 'good' && (
+                                    <div>
+                                      <div className="text-lg md:text-xl font-bold text-yellow-400">{game.fps} FPS</div>
+                                      <div className="text-xs text-yellow-300">Jucabil</div>
+                                    </div>
+                                  )}
+                                  {game.canRun === 'low' && (
+                                    <div>
+                                      <div className="text-lg md:text-xl font-bold text-orange-400">{game.fps} FPS</div>
+                                      <div className="text-xs text-orange-300">FPS scăzut</div>
+                                    </div>
+                                  )}
+                                  {game.canRun === 'integrated' && (
+                                    <div className="text-xs md:text-sm text-slate-400">Grafică integrată</div>
+                                  )}
+                                  {game.canRun === 'no' && (
+                                    <div className="text-xs md:text-sm text-red-400">Incompatibil</div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Component Tiers */}
+                      <div className="bg-slate-700 rounded-lg p-4 md:p-6">
+                        <h3 className="text-lg md:text-xl font-bold text-white mb-3 md:mb-4">Tier-uri Componente</h3>
+                        <div className="grid grid-cols-2 gap-3 md:gap-4">
+                          <div className="bg-slate-600 rounded-lg p-3 md:p-4">
+                            <div className="text-slate-300 text-xs md:text-sm mb-1">CPU Tier</div>
+                            <div className="text-base md:text-xl font-bold text-white capitalize">{performanceScores.cpuTier}</div>
+                          </div>
+                          <div className="bg-slate-600 rounded-lg p-3 md:p-4">
+                            <div className="text-slate-300 text-xs md:text-sm mb-1">GPU Tier</div>
+                            <div className="text-base md:text-xl font-bold text-white capitalize">{performanceScores.gpuTier === 'none' ? 'Fără GPU' : performanceScores.gpuTier}</div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {performanceScores.gpuTier === 'none' && (
+                        <div className="mt-4 bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-3 md:p-4">
+                          <p className="text-yellow-200 text-xs md:text-sm">
+                            <strong>💡 Recomandare:</strong> Adaugă o placă video dedicată pentru performanțe gaming mai bune!
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {showPriceEstimation && priceEstimation && (
+                  <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-lg p-6 md:p-8 max-w-4xl w-full border-2 border-green-500/30 my-8 max-h-[90vh] overflow-y-auto">
+                      <div className="flex justify-between items-start mb-6 sticky top-0 bg-gradient-to-br from-slate-800 to-slate-900 pb-4 z-10">
+                        <div className="flex items-center gap-3">
+                          <DollarSign className="w-8 h-8 md:w-10 md:h-10 text-green-500" />
+                          <div>
+                            <h2 className="text-2xl md:text-3xl font-bold text-white">Price Estimation</h2>
+                            <p className="text-slate-400 text-sm">Valoarea estimată a PC-ului tău</p>
+                          </div>
+                        </div>
+                        <button onClick={() => setShowPriceEstimation(false)} className="text-slate-400 hover:text-white flex-shrink-0">
+                          <X className="w-6 h-6 md:w-8 md:h-8" />
+                        </button>
+                      </div>
+
+                      {/* Price Cards */}
+                      <div className="grid md:grid-cols-2 gap-4 mb-6">
+                        <div className="bg-blue-600 rounded-lg p-6 text-center">
+                          <div className="text-sm text-blue-200 mb-2">Preț Nou (Componente)</div>
+                          <div className="text-4xl font-bold text-white mb-1">{priceEstimation.newPrice} RON</div>
+                          <div className="text-xs text-blue-200">Preț complet pentru componente noi</div>
+                        </div>
+                        <div className="bg-green-600 rounded-lg p-6 text-center">
+                          <div className="text-sm text-green-200 mb-2">Valoare Estimată (Second-hand)</div>
+                          <div className="text-4xl font-bold text-white mb-1">{priceEstimation.usedPrice} RON</div>
+                          <div className="text-xs text-green-200">
+                            <span className="font-semibold">{priceEstimation.depreciationPercent}%</span> depreciere față de nou
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Market Range */}
+                      <div className="bg-slate-700 rounded-lg p-6 mb-6">
+                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                          <Tag className="w-5 h-5 text-green-400" />
+                          Interval de Preț pe Piață
+                        </h3>
+                        <div className="mb-4">
+                          <div className="flex justify-between text-sm text-slate-300 mb-2">
+                            <span>{priceEstimation.marketRangeLow} RON</span>
+                            <span>{priceEstimation.usedPrice} RON</span>
+                            <span>{priceEstimation.marketRangeHigh} RON</span>
+                          </div>
+                          <div className="w-full bg-slate-600 rounded-full h-3 relative">
+                            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 via-green-500 to-blue-500 rounded-full"></div>
+                            <div 
+                              className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full border-2 border-slate-800 shadow-lg"
+                              style={{ left: '50%', transform: 'translate(-50%, -50%)' }}
+                            ></div>
+                          </div>
+                          <div className="text-center text-xs text-slate-400 mt-2">
+                            Preț de vânzare recomandat: <span className="text-white font-semibold">{priceEstimation.usedPrice} RON</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Similar Builds on Market */}
+                      <div className="bg-slate-700 rounded-lg p-6 mb-6">
+                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                          <TrendingUp className="w-5 h-5 text-blue-400" />
+                          PC-uri Similare pe Piață
+                        </h3>
+                        <div className="space-y-3">
+                          {priceEstimation.similarBuilds.map((build, index) => (
+                            <div key={index} className="bg-slate-600 rounded-lg p-4 flex justify-between items-center">
+                              <div>
+                                <div className="font-semibold text-white">{build.platform}</div>
+                                <div className="text-sm text-slate-300">{build.condition}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-xl font-bold text-green-400">{build.price} RON</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 bg-blue-900/30 border border-blue-500/50 rounded-lg p-3">
+                          <p className="text-blue-200 text-sm">
+                            💡 <strong>Tip:</strong> Prețurile variază în funcție de stare, accesorii incluse și urgența vânzătorului.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Depreciation Timeline */}
+                      <div className="bg-slate-700 rounded-lg p-6 mb-6">
+                        <h3 className="text-lg font-bold text-white mb-4">📉 Evoluția Valorii în Timp</h3>
+                        <div className="space-y-3">
+                          {priceEstimation.depreciationTimeline.map((point, index) => (
+                            <div key={index} className="flex items-center gap-4">
+                              <div className="w-20 text-slate-300 text-sm font-semibold">{point.label}</div>
+                              <div className="flex-1">
+                                <div className="bg-slate-600 rounded-full h-6 overflow-hidden">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-green-500 to-yellow-500 flex items-center justify-end pr-2"
+                                    style={{ width: `${(point.value / priceEstimation.newPrice) * 100}%` }}
+                                  >
+                                    <span className="text-xs font-bold text-white">{point.value} RON</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Recommendations */}
+                      {priceEstimation.recommendations.length > 0 && (
+                        <div className="bg-gradient-to-r from-purple-900/30 to-blue-900/30 border border-purple-500/50 rounded-lg p-6">
+                          <h3 className="text-lg font-bold text-white mb-3">💡 Recomandări</h3>
+                          <div className="space-y-2">
+                            {priceEstimation.recommendations.map((rec, index) => (
+                              <div key={index} className="text-purple-100 text-sm">
+                                {rec}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        const ComponentSection = ({ title, icon: Icon, components, selected, onSelect, info }) => {
+          return (
+            <div className="bg-slate-800 rounded-lg p-6 mb-6 border border-slate-700">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-3">
+                  {Icon && <Icon className="w-6 h-6 text-blue-400" />}
+                  <h2 className="text-xl font-bold text-white">{title}</h2>
+                </div>
+                {info && <span className="text-slate-400 text-sm">{info}</span>}
+              </div>
+              <div className="space-y-2">
+                {components.map(component => (
+                  <button key={component.id} onClick={() => onSelect(component)} className={`w-full text-left p-4 rounded-lg transition ${selected?.id === component.id ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-200 hover:bg-slate-600'}`}>
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <div className="font-semibold">{component.name}</div>
+                        <div className="text-sm opacity-75">
+                          {component.socket && `Socket: ${component.socket}`}
+                          {component.ramType && `${component.ramType} - ${component.maxRamSpeed}MHz`}
+                          {component.speed && `${component.speed}MHz - ${component.capacity}GB`}
+                          {component.wattage && `${component.wattage}W - ${component.efficiency}`}
+                          {component.tdp && !component.socket && `TDP: ${component.tdp}W`}
+                          {component.type && component.capacity && `${component.type} - ${component.capacity}GB`}
+                        </div>
+                      </div>
+                      <div className="font-bold">{component.price} RON</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<PCBuilder />, document.getElementById('root'));
+    </script>
+</body>
+</html>

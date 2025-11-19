@@ -1,0 +1,16 @@
+{
+  "cpu": [
+    { "id": "1", "name": "AMD Ryzen 5 7600X", "price": 1299, "socket": "AM5", "tdp": 105 },
+    { "id": "2", "name": "Intel i5-14600K", "price": 1599, "socket": "LGA1700", "tdp": 125 }
+  ],
+  "motherboard": [
+    { "id": "10", "name": "Gigabyte B650 Gaming X", "price": 899, "socket": "AM5" },
+    { "id": "11", "name": "MSI Z790 Tomahawk", "price": 1399, "socket": "LGA1700" }
+  ],
+  "gpu": [
+    { "id": "20", "name": "RTX 4070 Ti", "price": 3999, "tdp": 285 }
+  ],
+  "psu": [
+    { "id": "30", "name": "Corsair RM850x 850W", "price": 699, "wattage": 850 }
+  ]
+}

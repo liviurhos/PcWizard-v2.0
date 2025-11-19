@@ -1,0 +1,29 @@
+pc-builder-ro-uk/
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx                 → Home
+│   ├── builder/page.tsx         → Builder (drag & drop)
+│   ├── preview/page.tsx         → Preview + preț + compatibilitate
+│   └── profile/page.tsx         → Build-urile salvate
+├── components/
+│   ├── Navbar.tsx
+│   ├── CountrySelector.tsx
+│   ├── LoginModal.tsx
+│   ├── ComponentCard.tsx
+│   └── BuildCard.tsx
+├── lib/
+│   ├── firebase.ts
+│   ├── compatibility.ts
+│   └── affiliates.ts
+├── data/
+│   └── components.json          → fallback dacă API-ul e down
+├── store/
+│   └── buildStore.ts
+├── types/
+│   └── index.ts
+├── public/
+│   └── favicon.ico
+├── next.config.js
+├── package.json
+├── tsconfig.json
+└── tailwind.config.ts
