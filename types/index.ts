@@ -9,7 +9,7 @@ export interface Component {
   socket?: string;
   tdp?: number;
   wattage?: number;
-  type: string;
+  type?: string;
 }
 
 export interface Build {
