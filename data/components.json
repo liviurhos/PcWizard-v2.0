@@ -4,13 +4,27 @@
     { "id": "2", "name": "Intel i5-14600K", "price": 1599, "socket": "LGA1700", "tdp": 125 }
   ],
   "motherboard": [
-    { "id": "10", "name": "Gigabyte B650 Gaming X", "price": 899, "socket": "AM5" },
-    { "id": "11", "name": "MSI Z790 Tomahawk", "price": 1399, "socket": "LGA1700" }
+    { "id": "10", "name": "Gigabyte B650 Gaming X", "price": 899, "socket": "AM5", "ramType": "DDR5", "m2slots": 2 },
+    { "id": "11", "name": "MSI Z790 Tomahawk", "price": 1399, "socket": "LGA1700", "ramType": "DDR5", "m2slots": 3 },
+    { "id": "12", "name": "ASUS Prime B660M-A", "price": 699, "socket": "LGA1700", "ramType": "DDR4", "m2slots": 2 }
+  ],
+  "ram": [
+    { "id": "100", "name": "Corsair Vengeance 16GB", "price": 349, "type": "DDR5" },
+    { "id": "101", "name": "G.Skill Ripjaws 32GB", "price": 599, "type": "DDR5" },
+    { "id": "102", "name": "Kingston HyperX 16GB", "price": 299, "type": "DDR4" },
+    { "id": "103", "name": "Crucial Ballistix 32GB", "price": 499, "type": "DDR4" }
   ],
   "gpu": [
-    { "id": "20", "name": "RTX 4070 Ti", "price": 3999, "tdp": 285 }
+    { "id": "20", "name": "RTX 4070 Ti", "price": 3999, "tdp": 285, "length": 300 }
   ],
   "psu": [
     { "id": "30", "name": "Corsair RM850x 850W", "price": 699, "wattage": 850 }
+  ],
+  "storage": [
+    { "id": "40", "name": "Samsung 980 Pro 1TB", "price": 499, "type": "M.2" },
+    { "id": "41", "name": "WD Blue 2TB", "price": 299, "type": "SATA" }
+  ],
+  "case": [
+    { "id": "50", "name": "NZXT H510", "price": 399, "maxGpuLength": 380 }
   ]
 }
